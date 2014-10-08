@@ -1,4 +1,40 @@
 * {
 	margin: 0;
 	padding: 0;
+	text-align: center;
+	font-family: consolas;
+}
+
+html {
+	cursor: none;
+}
+
+#player {
+	position: absolute;
+
+	width: 40px;
+
+	font-size: 16px;
+	padding: 11px 0;
+
+	border: 1px solid darkblue;
+
+	background: skyblue;
+	font-weight: bold;
+}
+
+.enemy {
+	position: absolute;
+
+	width: 50px;
+
+	font-size: 16px;
+	padding: 16px 0;
+
+	border: 2px solid red;
+
+	background: red;
+	color: white;
+
+	font-weight: bold;
 }
