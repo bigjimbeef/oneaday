@@ -1,0 +1,31 @@
+* {
+	margin: 0;
+	padding: 0;
+
+	cursor: none;
+
+	-webkit-user-select: none;
+	-moz-user-select: none;
+
+	font-family: consolas;
+}
+
+html {
+	background: #000033;
+}
+
+div.letter {
+	position: absolute;
+
+	font-size: 16px;
+	font-weight: bold;
+	color: #000033;
+
+	width: 30px;
+	padding: 6px 0;
+
+	border-radius: 20px;
+
+	background: lime;
+	text-align: center;
+}
