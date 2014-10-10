@@ -37,6 +37,19 @@ var vector = function(inX, inY, inZ, inW) {
 		that.mW = iVal;
 	}
 
+	// x = A + t * (B - A)
+	this.lerpTowards = function(vTarget, iAmount) {
+		var x = this.getX() + ( iAmount * ( vTarget.getX() - this.getX() ) ); 
+		var y = this.getY() + ( iAmount * ( vTarget.getY() - this.getY() ) );
+		var z = this.getZ() + ( iAmount * ( vTarget.getZ() - this.getZ() ) );
+		var w = this.getW() + ( iAmount * ( vTarget.getW() - this.getW() ) );
+
+		this.setX(x);
+		this.setY(y);
+		this.setZ(z);
+		this.setW(w);
+	}
+
 	this.minus = function(vInput, vOutput) {
 		vOutput = new vector();
 		
@@ -93,6 +106,7 @@ var vec2 = function(inX, inY) {
 	this.add = that.add;
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
+	this.lerpTowards = that.lerpTowards;
 };
 
 var vec3 = function(inX, inY, inZ) {
@@ -112,6 +126,7 @@ var vec3 = function(inX, inY, inZ) {
 	this.add = that.add;
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
+	this.lerpTowards = that.lerpTowards;
 };
 
 var vec4 = function(inX, inY, inZ) {
@@ -131,6 +146,7 @@ var vec4 = function(inX, inY, inZ) {
 	this.add = that.add;
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
+	this.lerpTowards = that.lerpTowards;
 };
 
 //-----------------------------------------------------------------------------
@@ -143,17 +159,38 @@ var physicsWorld = function() {
 // public:
 
 	this.update = function() {
-		if ( _IS_DEBUG ) {
+		if ( utils.isDebug() ) {
 			console.log("DEBUG: Updating physicsWorld...");
 		}
 
-		var ePhysicsBodies = $('[data-' + that.DATA_ATTR + ']');
+		var ePhysicsBodies = $('[' + that.DATA_ATTR + ']');
 
 		$(ePhysicsBodies).each(function() {
 			var eElement = $(this);
 			var body = eElement.data(that.DATA_ATTR);
 
-			console.log(body);
+			// Apply gravity.
+			body.addTargetVelocity(that.vGravity);
+
+			// Solve collisions.
+			var bCollided = body.solve(that.iPhysicsStep);
+			if ( bCollided ) {
+				var vZero = new vec2(0, 0);
+
+				body.setTargetVelocity(vZero);
+				body.setCurrentVelocity(vZero);
+			}
+
+			// Integrate position.
+			body.update(that.iPhysicsStep);
+
+			// Get the new position for updating render.
+			var vNewPos = body.getPosition();
+
+			$(eElement).offset({
+				left: vNewPos.getX(),
+				top: vNewPos.getY()
+			});
 		});
 	}
 
@@ -161,44 +198,88 @@ var physicsWorld = function() {
 		return that.DATA_ATTR;
 	}
 
+	this.addBody = function(body) {
+		that.aBodies.push(body);
+	}
+	this.getBodies = function() {
+		return that.aBodies;
+	}
+
 // private:
 	that.DATA_ATTR = "physics-body";
 
 	// Default time step of 60Hz (1Hz in DEBUG)
-	that.iTimeStep = _IS_DEBUG ? 1.0 : 1.0 / 60.0;
+	that.iTimeStep = utils.isDebug() ? 1.0 : 1.0 / 60.0;
+	that.iTimeStep *= 1000;
 
-	that.vGravity = new vec2(0, -9.8);
+	// +ve is down in a browser.
+	that.vGravity = new vec2(0, 0.098);
 
 	that.iPhysicsStep = setInterval(this.update, that.iTimeStep);
+
+	that.aBodies = [];
 
 	return this;
 };
 
-var physicsBody = function() {
+var physicsBody = function(inX, inY, bStatic) {
 	var that = {};
 
 // public:
 
-	this.getVelocity = function() {
-		return that.vVelocity;
+	// Accessors.
+	this.getPosition = function() {
+		return that.vPosition;
 	}
-	this.addVelocity = function(vInput) {
-		that.vVelocity.addAssign(vInput);
+	this.setPosition = function(vInput) {
+		that.vPosition = vInput;
+	}
+	this.getCurrentVelocity = function() {
+		return that.vCurrentVel;
+	}
+	this.setCurrentVelocity = function(vInput) {
+		that.vCurrentVel = vInput;
+	}
+	this.addCurrentVelocity = function(vInput) {
+		that.vCurrentVel.addAssign(vInput);
+	}
+	this.getTargetVelocity = function() {
+		return that.vTargetVel;
+	}
+	this.setTargetVelocity = function(vInput) {
+		that.vTargetVel = vInput;
+	}
+	this.addTargetVelocity = function(vInput) {
+		that.vTargetVel.addAssign(vInput);
+	}
+	this.getIsStatic = function() {
+		return that.bIsStatic;
 	}
 
+	this.update = function(iDeltaTime) {
+		if ( !that.bIsStatic ) {
+			that.vCurrentVel.lerpTowards(that.vTargetVel, iDeltaTime);
+
+			that.vPosition.addAssign(that.vCurrentVel);
+		}
+	}
 	this.solve = function() {
 		console.error("Error: should not be solving physics on base body type!");
 	}
 
 // private:
-
-	that.vVelocity = new vec2(0, 0);
+	that.vPosition = new vec2(inX, inY);
+	that.vCurrentVel = new vec2(0, 0);
+	that.vTargetVel = new vec2(0, 0);
+	that.bIsStatic = bStatic;
 
 	return this;
 };
 
+// TODO:
+/*
 
-var physicsCircle = function(inRadius) {
+var physicsCircle = function(inX, inY, inRadius) {
 	var that = physicsBody();
 
 // public:
@@ -214,23 +295,49 @@ var physicsCircle = function(inRadius) {
 // private:
 	that.iRadius = inRadius;
 }
+*/
 
-var physicsBox = function(inWidth, inHeight) {
-	var that = physicsBody();
+var physicsBox = function(inX, inY, inStatic, inWidth, inHeight) {
+	var that = physicsBody(inX, inY, inStatic);
 
 // public:
-	this.solve = function() {
-		// TODO: use rectangular collision.
+	this.solve = function(iDeltaTime) {
+		if ( !this.getIsStatic() ) {
+
+			// TEST
+			var eFloor = $('#floor');
+			var floorBody = eFloor.data("physics-body");
+
+			var bCollided = utils.collision.rectangular(this, floorBody);
+
+			return bCollided;
+		}
 	}
 
 	this.getWidth = function() {
-		return that.iWidth;
+		return this.iWidth;
 	}
 	this.getHeight = function() {
-		return that.iHeight;
+		return this.iHeight;
 	}
 
+	this.getPosition = that.getPosition;
+	this.setPosition = that.setPosition;
+	
+	this.getCurrentVelocity = that.getCurrentVelocity;
+	this.setCurrentVelocity = that.setCurrentVelocity;
+	this.addCurrentVelocity = that.addCurrentVelocity;
+	
+	this.getTargetVelocity = that.getTargetVelocity;
+	this.setTargetVelocity = that.setTargetVelocity;
+	this.addTargetVelocity = that.addTargetVelocity;
+
+	this.getIsStatic = that.getIsStatic;
+
+	this.update = that.update;
+
 // private:
-	that.iWidth = inWidth;
-	that.iHeight = inHeight;
+
+	this.iWidth = inWidth;
+	this.iHeight = inHeight;
 }
