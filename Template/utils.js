@@ -22,6 +22,30 @@ var utils = {
 		}
 	},
 
+	physics: {
+		createPhysicsBody: function(eTarget) {
+			if ( !thePhysicsWorld ) {
+				console.error("No physics world initialised!");
+			}
+			var sAttr = thePhysicsWorld.getDataAttr();
+			
+			var body = new physicsBody();
+
+			$(eTarget).data(sAttr, body);
+		},
+
+		getPhysicsBody: function(eTarget) {
+			if ( !thePhysicsWorld ) {
+				console.error("No physics world initialised!");
+			}
+			var sAttr = thePhysicsWorld.getDataAttr();
+
+			if ( $(eTarget).data(sAttr) ) {
+				return $(eTarget).data(sAttr);
+			}
+		},
+	},
+
 	vector: {
 		squareLength: function(vInput) {
 			return Math.pow(vInput.getX(), 2) + Math.pow(vInput.getY(), 2) + Math.pow(vInput.getZ(), 2) + Math.pow(vInput.getW(), 2);
