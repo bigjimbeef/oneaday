@@ -173,8 +173,10 @@ var physicsWorld = function() {
 			body.addTargetVelocity(that.vGravity);
 
 			// Solve collisions.
-			var bCollided = body.solve(that.iPhysicsStep);
-			if ( bCollided ) {
+			var vPenetration = body.solve(that.iPhysicsStep);
+			if ( vPenetration != null ) {
+				debugger
+
 				var vZero = new vec2(0, 0);
 
 				body.setTargetVelocity(vZero);
@@ -182,7 +184,7 @@ var physicsWorld = function() {
 			}
 
 			// Integrate position.
-			body.update(that.iPhysicsStep);
+			body.update(that.iPhysicsStep, vPenetration);
 
 			// Get the new position for updating render.
 			var vNewPos = body.getPosition();
@@ -256,11 +258,15 @@ var physicsBody = function(inX, inY, bStatic) {
 		return that.bIsStatic;
 	}
 
-	this.update = function(iDeltaTime) {
+	this.update = function(iDeltaTime, vPenetration) {
 		if ( !that.bIsStatic ) {
 			that.vCurrentVel.lerpTowards(that.vTargetVel, iDeltaTime);
 
 			that.vPosition.addAssign(that.vCurrentVel);
+
+			if ( vPenetration != null ) {
+				that.vPosition.addAssign(that.vPenetration);
+			}
 		}
 	}
 	this.solve = function() {
@@ -308,9 +314,9 @@ var physicsBox = function(inX, inY, inStatic, inWidth, inHeight) {
 			var eFloor = $('#floor');
 			var floorBody = eFloor.data("physics-body");
 
-			var bCollided = utils.collision.rectangular(this, floorBody);
+			var vPenetration = utils.collision.rectangular(this, floorBody);
 
-			return bCollided;
+			return vPenetration;
 		}
 	}
 

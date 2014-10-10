@@ -41,17 +41,23 @@ var utils = {
 			var centreXDiff = twoCentreX - oneCenterX;
 			var centreYDiff = twoCentreY - oneCenterY;
 
-
 			var halfWidthSum = ( oneW / 2.0 ) + ( twoW / 2.0 );
 			var halfHeightSum = ( oneH / 2.0 ) + ( twoH / 2.0 );
 
+			// Detect intersection.
 			if ( Math.abs(centreXDiff) < halfWidthSum ) {
 				if ( Math.abs(centreYDiff) < halfHeightSum ) {
-					return true;
+					var xSign = centreXDiff >= 0 ? 1 : -1;
+					var xPen = xSign * (halfHeightSum - Math.abs(centreXDiff));
+
+					var ySign = centreYDiff >= 0 ? 1 : -1;
+					var yPen = ySign * (halfHeightSum - Math.abs(centreYDiff));
+
+					return new vec2(xPen, yPen);
 				}
 			}
 
-			return false;
+			return null;
 		}
 
 	},
