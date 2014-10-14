@@ -24,41 +24,6 @@ var utils = {
 		},
 
 		rectangular: function(bodyOne, bodyTwo) {
-			var leftOne = bodyOne.getPosition().getX();
-			var rightOne = bodyOne.getPosition().getX() + bodyOne.getWidth();
-			var topOne = bodyOne.getPosition().getY();
-			var bottomOne = bodyOne.getPosition().getY() + bodyOne.getHeight();
-
-			var leftTwo = bodyTwo.getPosition().getX();
-			var rightTwo = bodyTwo.getPosition().getX() + bodyTwo.getWidth();
-			var topTwo = bodyTwo.getPosition().getY();
-			var bottomTwo = bodyTwo.getPosition().getY() + bodyTwo.getHeight();
-
-			if ( rightOne < leftTwo ) {
-				return null;
-			}
-			if ( leftOne > rightTwo ) {
-				return null;
-			}
-			if ( bottomOne < topTwo ) {
-				return null;
-			}
-			if ( topOne > bottomTwo ) {
-				return null;
-			}
-
-			var xAxis = new vec2(1, 0);
-			var yAxis = new vec2(0, 1);
-
-			var oneDotX = utils.vector.dot(bodyOne.getPosition(), xAxis);
-			var oneDotY = utils.vector.dot(bodyOne.getPosition(), yAxis);
-
-			var twoDotX = utils.vector.dot(bodyTwo.getPosition(), xAxis);
-			var twoDotY = utils.vector.dot(bodyTwo.getPosition(), yAxis);
-
-			debugger
-
-			/*
 			var oneX = bodyOne.getPosition().getX();
 			var oneY = bodyOne.getPosition().getY();
 			var oneW = bodyOne.getWidth();
@@ -91,7 +56,6 @@ var utils = {
 					return new vec2(xPen, yPen);
 				}
 			}
-			*/
 
 			return null;
 		}
@@ -109,14 +73,12 @@ var utils = {
 			var iWidth = $(eTarget).outerWidth();
 			var iHeight = $(eTarget).outerHeight();
 
-			var box = new physicsBox(eTarget, vPosition.getX(), vPosition.getY(), bStatic, iWidth, iHeight);
+			var box = new physicsBox(vPosition.getX(), vPosition.getY(), bStatic, iWidth, iHeight);
 
 			thePhysicsWorld.addBody(box);
 
 			$(eTarget).data(sAttr, box);
 			$(eTarget).attr(sAttr, true);
-
-			box.initDebug();
 		},
 
 		getPhysicsBody: function(eTarget) {
@@ -128,7 +90,7 @@ var utils = {
 			if ( $(eTarget).data(sAttr) ) {
 				return $(eTarget).data(sAttr);
 			}
-		}
+		},
 	},
 
 	vector: {
@@ -153,10 +115,6 @@ var utils = {
 
 		distance: function(vFrom, vTo) {
 			return Math.sqrt(this.squareDistance(vFrom, vTo));
-		},
-
-		dot: function(vFrom, vTo) {
-			return ( vFrom.getX() * vTo.getX() ) + ( vFrom.getY() * vTo.getY() ) + ( vFrom.getZ() * vTo.getZ() ) + ( vFrom.getW() * vTo.getW() );
 		}
 	}
 };

@@ -159,8 +159,8 @@ var physicsWorld = function() {
 // public:
 
 	this.update = function() {
-		if ( that.bPaused ) {
-			return;
+		if ( utils.isDebug() ) {
+			console.log("DEBUG: Updating physicsWorld...");
 		}
 
 		var ePhysicsBodies = $('[' + that.DATA_ATTR + ']');
@@ -192,7 +192,10 @@ var physicsWorld = function() {
 				top: vNewPos.getY()
 			});
 
-			body.debugDraw();
+			// Debug draw.
+			if ( _IS_DEBUG ) {
+				body.debugDraw();
+			}
 		});
 	}
 
@@ -205,16 +208,6 @@ var physicsWorld = function() {
 	}
 	this.getBodies = function() {
 		return that.aBodies;
-	}
-	this.getDebugDraw = function() {
-		return that.bDebugDrawPhysics;
-	}
-
-	this.togglePause = function() {
-		that.bPaused = !that.bPaused;
-	}
-	this.toggleDebugDraw = function() {
-		that.bDebugDrawPhysics = !that.bDebugDrawPhysics;
 	}
 
 // private:
@@ -231,13 +224,10 @@ var physicsWorld = function() {
 
 	that.aBodies = [];
 
-	that.bPaused = false;
-	that.bDebugDrawPhysics = false;
-
 	return this;
 };
 
-var physicsBody = function(inElement, inX, inY, bStatic) {
+var physicsBody = function(inX, inY, bStatic) {
 	var that = {};
 
 // public:
@@ -270,9 +260,6 @@ var physicsBody = function(inElement, inX, inY, bStatic) {
 	this.getIsStatic = function() {
 		return that.bIsStatic;
 	}
-	this.getTargetElement = function() {
-		return that.eTarget;
-	}
 
 	this.update = function(iDeltaTime, vPenetration) {
 		if ( !that.bIsStatic ) {
@@ -280,24 +267,16 @@ var physicsBody = function(inElement, inX, inY, bStatic) {
 
 			that.vPosition.addAssign(that.vCurrentVel);
 
-			/*
 			if ( vPenetration != null ) {
-				vPenetration.setX(0);
-
-				that.vPosition.addAssign(vPenetration);
+				that.vPosition.addAssign(that.vPenetration);
 			}
-			*/
 		}
 	}
 	this.solve = function() {
 		console.error("Error: should not be solving physics on base body type!");
 	}
-	this.initDebug = function() {
-
-	}
 	this.debugDraw = function() {
-		var fTarget = thePhysicsWorld.getDebugDraw() ? "show" : "hide";
-		this.getTargetElement().find('.debugBounds')[fTarget]();
+		console.error("Error: should not be using debug draw on base object.");
 	}
 
 // private:
@@ -305,7 +284,6 @@ var physicsBody = function(inElement, inX, inY, bStatic) {
 	that.vCurrentVel = new vec2(0, 0);
 	that.vTargetVel = new vec2(0, 0);
 	that.bIsStatic = bStatic;
-	that.eTarget = inElement;
 
 	return this;
 };
@@ -331,8 +309,8 @@ var physicsCircle = function(inX, inY, inRadius) {
 }
 */
 
-var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
-	var that = physicsBody(inElement, inX, inY, inStatic);
+var physicsBox = function(inX, inY, inStatic, inWidth, inHeight) {
+	var that = physicsBody(inX, inY, inStatic);
 
 // public:
 	this.solve = function(iDeltaTime) {
@@ -348,21 +326,8 @@ var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
 		}
 	}
 
-	this.initDebug = function() {
-		var eElement = this.getTargetElement();
-
-		var iWidth = $(eElement).outerWidth();
-		var iHeight = $(eElement).outerHeight();
-
-		var eDebugDraw = $("<div class='debugBounds'></div>");
-
-		$(eDebugDraw).css({
-			width: iWidth + "px",
-			height: iHeight + "px",
-			display: "none"
-		});
-
-		$(eElement).append(eDebugDraw);
+	this.debugDraw = function() {
+		debugger
 	}
 
 	this.getWidth = function() {
@@ -377,17 +342,15 @@ var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
 	
 	this.getCurrentVelocity = that.getCurrentVelocity;
 	this.setCurrentVelocity = that.setCurrentVelocity;
-	this.addCurrentVelocity = that.addCurrentVelocity; 
+	this.addCurrentVelocity = that.addCurrentVelocity;
 	
 	this.getTargetVelocity = that.getTargetVelocity;
 	this.setTargetVelocity = that.setTargetVelocity;
 	this.addTargetVelocity = that.addTargetVelocity;
 
 	this.getIsStatic = that.getIsStatic;
-	this.getTargetElement = that.getTargetElement;
 
 	this.update = that.update;
-	this.debugDraw = that.debugDraw;
 
 // private:
 
