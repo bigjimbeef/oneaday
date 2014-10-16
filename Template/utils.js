@@ -125,7 +125,7 @@ var utils = {
 				var p2 = utils.collision.get2DProjection(aBodyTwoVerts, vAxis);
 
 				if ( !utils.collision.hasOverlap(p1, p2) ) {
-					return false;
+					return null;
 				}
 				else {
 					var overlap = utils.collision.getOverlap(p1, p2);
@@ -144,7 +144,7 @@ var utils = {
 				var p2 = utils.collision.get2DProjection(aBodyTwoVerts, vAxis);
 
 				if ( !utils.collision.hasOverlap(p1, p2) ) {
-					return false;
+					return null;
 				}
 				else {
 					var overlap = utils.collision.getOverlap(p1, p2);
@@ -161,96 +161,6 @@ var utils = {
 				axis: smallestAxis
 			}
 		},
-
-		circular: function(eOne, eTwo) {
-			var offsetOne = $(eOne).offset();
-			var widthOne = $(eOne).outerWidth();
-			var heightOne = $(eOne).outerHeight();
-
-			var offsetTwo = $(eTwo).offset();
-			var widthTwo = $(eTwo).outerWidth();
-			var heightTwo = $(eTwo).outerHeight();
-
-			var vOne = new vec2(offsetOne.left + (widthOne / 2), offsetOne.top + (heightOne / 2));
-			var vTwo = new vec2(offsetTwo.left + (widthTwo / 2), offsetTwo.top + (heightTwo / 2));
-
-			var maxDistance = Math.pow((( widthOne / 2 ) + ( widthTwo / 2 )), 2);
-
-			return utils.vector.squareDistance(vOne, vTwo) < maxDistance;
-		},
-
-		rectangular: function(bodyOne, bodyTwo) {
-			var leftOne = bodyOne.getPosition().getX();
-			var rightOne = bodyOne.getPosition().getX() + bodyOne.getWidth();
-			var topOne = bodyOne.getPosition().getY();
-			var bottomOne = bodyOne.getPosition().getY() + bodyOne.getHeight();
-
-			var leftTwo = bodyTwo.getPosition().getX();
-			var rightTwo = bodyTwo.getPosition().getX() + bodyTwo.getWidth();
-			var topTwo = bodyTwo.getPosition().getY();
-			var bottomTwo = bodyTwo.getPosition().getY() + bodyTwo.getHeight();
-
-			if ( rightOne < leftTwo ) {
-				return null;
-			}
-			if ( leftOne > rightTwo ) {
-				return null;
-			}
-			if ( bottomOne < topTwo ) {
-				return null;
-			}
-			if ( topOne > bottomTwo ) {
-				return null;
-			}
-
-			var xAxis = new vec2(1, 0);
-			var yAxis = new vec2(0, 1);
-
-			var oneDotX = utils.vector.dot(bodyOne.getPosition(), xAxis);
-			var oneDotY = utils.vector.dot(bodyOne.getPosition(), yAxis);
-
-			var twoDotX = utils.vector.dot(bodyTwo.getPosition(), xAxis);
-			var twoDotY = utils.vector.dot(bodyTwo.getPosition(), yAxis);
-
-			debugger
-
-			/*
-			var oneX = bodyOne.getPosition().getX();
-			var oneY = bodyOne.getPosition().getY();
-			var oneW = bodyOne.getWidth();
-			var oneH = bodyOne.getHeight();
-			var oneCenterX = oneX + ( oneW / 2.0 );
-			var oneCenterY = oneY + ( oneH / 2.0 );
-
-			var twoX = bodyTwo.getPosition().getX();
-			var twoY = bodyTwo.getPosition().getY();
-			var twoW = bodyTwo.getWidth();
-			var twoH = bodyTwo.getHeight();
-			var twoCentreX = twoX + ( twoW / 2.0 );
-			var twoCentreY = twoY + ( twoH / 2.0 );
-
-			var centreXDiff = twoCentreX - oneCenterX;
-			var centreYDiff = twoCentreY - oneCenterY;
-
-			var halfWidthSum = ( oneW / 2.0 ) + ( twoW / 2.0 );
-			var halfHeightSum = ( oneH / 2.0 ) + ( twoH / 2.0 );
-
-			// Detect intersection.
-			if ( Math.abs(centreXDiff) < halfWidthSum ) {
-				if ( Math.abs(centreYDiff) < halfHeightSum ) {
-					var xSign = centreXDiff >= 0 ? 1 : -1;
-					var xPen = xSign * (halfHeightSum - Math.abs(centreXDiff));
-
-					var ySign = centreYDiff >= 0 ? 1 : -1;
-					var yPen = ySign * (halfHeightSum - Math.abs(centreYDiff));
-
-					return new vec2(xPen, yPen);
-				}
-			}
-			*/
-
-			return null;
-		}
 
 	},
 

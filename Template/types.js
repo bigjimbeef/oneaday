@@ -225,8 +225,8 @@ var physicsWorld = function() {
 			body.addTargetVelocity(that.vGravity);
 
 			// Solve collisions.
-			var overlap = body.solve(that.iPhysicsStep);
-			if ( overlap != null ) {
+			var output = body.solve(that.iPhysicsStep);
+			if ( output != null ) {
 				var vZero = new vec2(0, 0);
 
 				body.setTargetVelocity(vZero);
@@ -234,7 +234,7 @@ var physicsWorld = function() {
 			}
 
 			// Integrate position.
-			body.update(that.iPhysicsStep, overlap);
+			body.update(that.iPhysicsStep, output);
 
 			// Get the new position for updating render.
 			var vNewPos = body.getPosition();
@@ -329,17 +329,16 @@ var physicsBody = function(inElement, inX, inY, bStatic) {
 		return false;
 	}
 
-	this.update = function(iDeltaTime, iOverlap) {
+	this.update = function(iDeltaTime, mtv) {
 		if ( !that.bIsStatic ) {
 			that.vCurrentVel.lerpTowards(that.vTargetVel, iDeltaTime);
 
 			that.vPosition.addAssign(that.vCurrentVel);
 
-			if ( iOverlap != null ) {
-				//vPenetration.setX(0);
+			if ( mtv != null ) {
+				var offset = new vec2(-mtv.axis.getX() * mtv.overlap, -mtv.axis.getY() * mtv.overlap);
 
-				var vTest = new vec2(0, -iOverlap);
-				that.vPosition.addAssign(vTest);
+				that.vPosition.addAssign(offset);
 			}
 		}
 	}
@@ -395,15 +394,13 @@ var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
 	this.solve = function(iDeltaTime) {
 		if ( !this.getIsStatic() ) {
 
-			// TEST
+			// TODO:
 			var eFloor = $('#floor');
 			var floorBody = eFloor.data("physics-body");
 
-			//var vPenetration = utils.collision.rectangular(this, floorBody);
-
 			var output = utils.collision.getMTV(this, floorBody);
 
-			return output.overlap;
+			return output;
 		}
 	}
 
