@@ -6,6 +6,162 @@ var utils = {
 
 	collision: {
 
+		getVertsForBox: function(body) {
+			var left = body.getPosition().getX();
+			var right = body.getPosition().getX() + body.getWidth();
+			var top = body.getPosition().getY();
+			var bottom = body.getPosition().getY() + body.getHeight();
+
+			var aVerts = [];
+			aVerts.push(new vec2(left, top));
+			aVerts.push(new vec2(right, top));
+			aVerts.push(new vec2(right, bottom));
+			aVerts.push(new vec2(left, bottom));
+
+			return aVerts;
+		},
+
+		getAxesForBox: function(body) {
+			var aAxes = [];
+
+			var aVerts = utils.collision.getVertsForBox(body);
+
+			for ( var i = 0; i < aVerts.length; ++i ) {
+				var v1 = aVerts[i];
+				var v2 = aVerts[(i == aVerts.length - 1) ? 0 : i + 1];
+
+				var vEdge = v2.minus(v1, vEdge);
+				vEdge.normaliseSelf();
+
+				var vPerp = vEdge.getPerp(vPerp);
+
+				aAxes.push(vPerp);
+			}
+
+			return aAxes;
+		},
+
+		get2DProjection: function(aVerts, vAxis) {
+			var min = utils.vector.dot(vAxis, aVerts[0]);
+			var max = min;
+
+			for ( var i = 1; i < aVerts.length; ++i ) {
+				var p = utils.vector.dot(vAxis, aVerts[i]);
+
+				if ( p < min ) {
+					min = p;
+				}
+				else if ( p > max ) {
+					max = p;
+				}
+			}
+
+			return {
+				min: min,
+				max: max
+			};
+		},
+
+		getAxesFromBodies: function(eOne, eTwo) {
+			var aBodyOneAxes = [];
+			var aBodyTwoAxes = [];
+
+			var bOneIsCircle = eOne.getIsCircle();
+			var bTwoIsCircle = eTwo.getIsCircle();
+
+			if ( bOneIsCircle && bTwoIsCircle ) {
+				// TODO:
+			}
+			else if ( bOneIsCircle ^ bTwoIsCircle ) {
+				// TODO:
+			}
+			else {
+				aBodyOneAxes = utils.collision.getAxesForBox(eOne);
+				aBodyTwoAxes = utils.collision.getAxesForBox(eTwo);
+			}
+
+			return {
+				one: aBodyOneAxes,
+				two: aBodyTwoAxes
+			}
+		},
+
+		hasOverlap: function(p1, p2) {
+			if ( p1.max < p2.min || p2.max < p2.min ) {
+				return false;
+			}
+
+			return true;
+		},
+
+		getOverlap: function(p1, p2) {
+			if ( !utils.collision.hasOverlap(p1, p2) ) {
+				console.error("Checking non-overlapping objects!");
+				return 0;
+			}
+
+			var overlap = Math.min(p1.max, p2.max) - Math.max(p1.min, p2.min);
+
+			return overlap;
+		},
+
+		getMTV: function(eOne, eTwo) {
+			var axes = utils.collision.getAxesFromBodies(eOne, eTwo);
+
+			var aBodyOneAxes = axes.one;
+			var aBodyTwoAxes = axes.two;
+
+			var smallestAxis = null;
+			var minOverlap = Number.MAX_VALUE;
+
+			var aBodyOneVerts = utils.collision.getVertsForBox(eOne);
+			var aBodyTwoVerts = utils.collision.getVertsForBox(eTwo);
+
+			// Shape 1 axes.
+			for ( var i = 0; i < aBodyOneAxes.length; ++i ) {
+				var vAxis = aBodyOneAxes[i];
+
+				var p1 = utils.collision.get2DProjection(aBodyOneVerts, vAxis);
+				var p2 = utils.collision.get2DProjection(aBodyTwoVerts, vAxis);
+
+				if ( !utils.collision.hasOverlap(p1, p2) ) {
+					return false;
+				}
+				else {
+					var overlap = utils.collision.getOverlap(p1, p2);
+
+					if ( overlap < minOverlap ) {
+						minOverlap = overlap;
+						smallestAxis = vAxis;
+					}
+				}
+			}
+			// Shape 2 axes.
+			for ( var i = 0; i < aBodyTwoAxes.length; ++i ) {
+				var vAxis = aBodyTwoAxes[i];
+
+				var p1 = utils.collision.get2DProjection(aBodyOneVerts, vAxis);
+				var p2 = utils.collision.get2DProjection(aBodyTwoVerts, vAxis);
+
+				if ( !utils.collision.hasOverlap(p1, p2) ) {
+					return false;
+				}
+				else {
+					var overlap = utils.collision.getOverlap(p1, p2);
+
+					if ( overlap < minOverlap ) {
+						minOverlap = overlap;
+						smallestAxis = vAxis;
+					}
+				}
+			}
+
+			return {
+				overlap: minOverlap,
+				axis: smallestAxis
+			}
+		},
+
 		circular: function(eOne, eTwo) {
 			var offsetOne = $(eOne).offset();
 			var widthOne = $(eOne).outerWidth();

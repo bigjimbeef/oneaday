@@ -1,6 +1,21 @@
 //-----------------------------------------------------------------------------
 // Vectors
 //
+getVectorOfSameClass = function(vInput) {
+	if ( vInput instanceof vec2 ) {
+		return new vec2(vInput.getX(), vInput.getY());
+	}
+	else if ( vInput instanceof vec3 ) {
+		return new vec3(vInput.getX(), vInput.getY(), vInput.getZ());
+	}
+	else if ( vInput instanceof vec4 ) {
+		return new vec4(vInput.getX(), vInput.getY(), vInput.getZ(), vInput.getW());
+	}
+	else {
+		return new vector(vInput.getX(), vInput.getY(), vInput.getZ(), vInput.getW());
+	}
+}
+
 var vector = function(inX, inY, inZ, inW) {
 	var that = {};
 
@@ -37,6 +52,28 @@ var vector = function(inX, inY, inZ, inW) {
 		that.mW = iVal;
 	}
 
+	this.normalise = function(vOutput) {
+		vOutput = getVectorOfSameClass(this);
+
+		var length = utils.vector.length(this);
+
+		vOutput.setX(that.mX / length);
+		vOutput.setY(that.mY / length);
+		vOutput.setZ(that.mZ / length);
+		vOutput.setW(that.mW / length);
+
+		return vOutput;
+	}
+
+	this.normaliseSelf = function() {
+		var length = utils.vector.length(this);
+
+		that.mX = that.mX / length;
+		that.mY = that.mY / length;
+		that.mZ = that.mZ / length;
+		that.mW = that.mW / length;
+	}
+
 	// x = A + t * (B - A)
 	this.lerpTowards = function(vTarget, iAmount) {
 		var x = this.getX() + ( iAmount * ( vTarget.getX() - this.getX() ) ); 
@@ -51,7 +88,7 @@ var vector = function(inX, inY, inZ, inW) {
 	}
 
 	this.minus = function(vInput, vOutput) {
-		vOutput = new vector();
+		vOutput = getVectorOfSameClass(this);
 		
 		vOutput.setX(this.getX() - vInput.getX());
 		vOutput.setY(this.getY() - vInput.getY());
@@ -62,7 +99,7 @@ var vector = function(inX, inY, inZ, inW) {
 	}
 
 	this.add = function(vInput, vOutput) {
-		vOutput = new vector();
+		vOutput = getVectorOfSameClass(this);
 		
 		vOutput.setX(this.getX() + vInput.getX());
 		vOutput.setY(this.getY() + vInput.getY());
@@ -86,6 +123,10 @@ var vector = function(inX, inY, inZ, inW) {
 		this.setW(this.getW() + vInput.getW());
 	}
 
+	this.getPerp = function(vOutput) {
+		console.log("yep");
+	}
+
 	return this;
 };
 
@@ -107,6 +148,13 @@ var vec2 = function(inX, inY) {
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
 	this.lerpTowards = that.lerpTowards;
+	this.normalise = that.normalise;
+	this.normaliseSelf = that.normaliseSelf;
+	
+	this.getPerp = function(vOutput) {
+		vOutput = new vec2(-this.getY(), this.getX());
+		return vOutput;
+	}
 };
 
 var vec3 = function(inX, inY, inZ) {
@@ -127,10 +175,12 @@ var vec3 = function(inX, inY, inZ) {
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
 	this.lerpTowards = that.lerpTowards;
+	this.normalise = that.normalise;
+	this.normaliseSelf = that.normaliseSelf;
 };
 
-var vec4 = function(inX, inY, inZ) {
-	var that = vector(inX, inY, inZ);
+var vec4 = function(inX, inY, inZ, inW) {
+	var that = vector(inX, inY, inZ, inW);
 
 	this.getX = that.getX;
 	this.getY = that.getY;
@@ -147,6 +197,8 @@ var vec4 = function(inX, inY, inZ) {
 	this.minusAssign = that.minusAssign;
 	this.addAssign = that.addAssign;
 	this.lerpTowards = that.lerpTowards;
+	this.normalise = that.normalise;
+	this.normaliseSelf = that.normaliseSelf;
 };
 
 //-----------------------------------------------------------------------------
@@ -173,8 +225,8 @@ var physicsWorld = function() {
 			body.addTargetVelocity(that.vGravity);
 
 			// Solve collisions.
-			var vPenetration = body.solve(that.iPhysicsStep);
-			if ( vPenetration != null ) {
+			var overlap = body.solve(that.iPhysicsStep);
+			if ( overlap != null ) {
 				var vZero = new vec2(0, 0);
 
 				body.setTargetVelocity(vZero);
@@ -182,7 +234,7 @@ var physicsWorld = function() {
 			}
 
 			// Integrate position.
-			body.update(that.iPhysicsStep, vPenetration);
+			body.update(that.iPhysicsStep, overlap);
 
 			// Get the new position for updating render.
 			var vNewPos = body.getPosition();
@@ -225,7 +277,7 @@ var physicsWorld = function() {
 	that.iTimeStep *= 1000;
 
 	// +ve is down in a browser.
-	that.vGravity = new vec2(0, 0.098);
+	that.vGravity = new vec2(0, 0.98);
 
 	that.iPhysicsStep = setInterval(this.update, that.iTimeStep);
 
@@ -273,20 +325,22 @@ var physicsBody = function(inElement, inX, inY, bStatic) {
 	this.getTargetElement = function() {
 		return that.eTarget;
 	}
+	this.getIsCircle = function() {
+		return false;
+	}
 
-	this.update = function(iDeltaTime, vPenetration) {
+	this.update = function(iDeltaTime, iOverlap) {
 		if ( !that.bIsStatic ) {
 			that.vCurrentVel.lerpTowards(that.vTargetVel, iDeltaTime);
 
 			that.vPosition.addAssign(that.vCurrentVel);
 
-			/*
-			if ( vPenetration != null ) {
-				vPenetration.setX(0);
+			if ( iOverlap != null ) {
+				//vPenetration.setX(0);
 
-				that.vPosition.addAssign(vPenetration);
+				var vTest = new vec2(0, -iOverlap);
+				that.vPosition.addAssign(vTest);
 			}
-			*/
 		}
 	}
 	this.solve = function() {
@@ -325,6 +379,9 @@ var physicsCircle = function(inX, inY, inRadius) {
 		return that.iRadius;
 	}
 
+	this.getIsCircle = function() {
+		return true;
+	}
 
 // private:
 	that.iRadius = inRadius;
@@ -342,9 +399,11 @@ var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
 			var eFloor = $('#floor');
 			var floorBody = eFloor.data("physics-body");
 
-			var vPenetration = utils.collision.rectangular(this, floorBody);
+			//var vPenetration = utils.collision.rectangular(this, floorBody);
 
-			return vPenetration;
+			var output = utils.collision.getMTV(this, floorBody);
+
+			return output.overlap;
 		}
 	}
 
@@ -385,6 +444,7 @@ var physicsBox = function(inElement, inX, inY, inStatic, inWidth, inHeight) {
 
 	this.getIsStatic = that.getIsStatic;
 	this.getTargetElement = that.getTargetElement;
+	this.getIsCircle = that.getIsCircle;
 
 	this.update = that.update;
 	this.debugDraw = that.debugDraw;
